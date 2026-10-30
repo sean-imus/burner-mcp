@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Boot the phone headless (use bin/emu-view to watch) and wait until Android has booted.
+# On a host with the burner-emulator service installed, this starts the service instead.
+set -euo pipefail
+
+BIN="$(cd "$(dirname "$0")" && pwd)"
+source "$BIN/config.sh"
+LOG="${XDG_STATE_HOME:-$HOME/.local/state}/burner-mcp/emulator.log"
+mkdir -p "$(dirname "$LOG")"
+
+if systemctl --user cat burner-emulator.service >/dev/null 2>&1; then
+  systemctl --user start burner-emulator.service   # waits for boot via its ExecStartPost
+  adb devices
+  exit 0
+fi
+
+if adb devices | grep -q "^$BURNER_SERIAL\b"; then
+  echo "$BURNER_SERIAL is already running:"
+  adb devices
+  exit 0
+fi
+
+# setsid detaches it from this terminal, so closing the terminal doesn't kill the phone.
+setsid "$BIN/emu-run" >"$LOG" 2>&1 &
+pid=$!
+echo "Starting the phone (pid $pid, log: $LOG)..."
+EMU_PID=$pid EMU_LOG=$LOG "$BIN/emu-wait-boot"
+adb devices

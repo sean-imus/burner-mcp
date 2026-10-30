@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Run the emulator headless in the foreground (the burner-emulator service uses this; bin/emu-start backgrounds it).
+set -euo pipefail
+source "$(dirname "$0")/config.sh"
+
+SDK="${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}"
+# "auto" wrongly falls back to software rendering on some Intel GPUs (Iris Xe); host is ~3.5x faster there.
+# Fall back with EMU_GPU=swiftshader_indirect if rendering breaks (or there's no usable GPU).
+GPU="${EMU_GPU:-host}"
+
+exec env ANDROID_SDK_ROOT="$SDK" "$SDK/emulator/emulator" -avd "$BURNER_AVD" -port "${BURNER_SERIAL#emulator-}" \
+  -no-window -no-audio -no-boot-anim -gpu "$GPU" -accel on

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Wait until Android has fully booted, then turn animations off (EMU_ANIMATIONS=1 keeps them).
+# EMU_PID=<pid> makes it fail fast if that emulator process dies; EMU_LOG=<file> is shown on failure.
+set -euo pipefail
+source "$(dirname "$0")/config.sh"
+
+BOOT_TIMEOUT="${BOOT_TIMEOUT:-300}"
+
+fail() {
+  echo "$1" >&2
+  if [ -n "${EMU_LOG:-}" ]; then echo "Last log lines:" >&2; tail -n 20 "$EMU_LOG" >&2; fi
+  exit 1
+}
+
+deadline=$((SECONDS + BOOT_TIMEOUT))
+until [ "$(adb -s "$BURNER_SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
+  if [ -n "${EMU_PID:-}" ] && ! kill -0 "$EMU_PID" 2>/dev/null; then fail "Emulator exited before finishing boot."; fi
+  if (( SECONDS > deadline )); then fail "Timed out after ${BOOT_TIMEOUT}s waiting for boot."; fi
+  sleep 2
+done
+
+# No animations: snappier for you, and Claude never reads the UI mid-transition.
+if [ "${EMU_ANIMATIONS:-0}" != "1" ]; then
+  for k in window_animation_scale transition_animation_scale animator_duration_scale; do
+    adb -s "$BURNER_SERIAL" shell settings put global "$k" 0
+  done
+fi
+
+echo "Booted in ${SECONDS}s."

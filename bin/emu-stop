@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Shut the emulator down cleanly (saves a quick-boot snapshot).
+set -euo pipefail
+source "$(dirname "$0")/config.sh"
+
+adb -s "$BURNER_SERIAL" emu kill

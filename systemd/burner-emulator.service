@@ -1,0 +1,19 @@
+# Template: install.sh fills in @REPO@ and installs this to ~/.config/systemd/user/.
+# The bin/ scripts read their settings (AVD, serial, GPU) from ~/.config/burner-mcp/env themselves.
+[Unit]
+Description=Headless Android emulator for burner-mcp
+
+[Service]
+Type=simple
+ExecStart=@REPO@/bin/emu-run
+# Holds "starting" until Android has booted, so burner-mcp only starts against a ready phone.
+ExecStartPost=@REPO@/bin/emu-wait-boot
+# Clean shutdown saves a quick-boot snapshot.
+ExecStop=@REPO@/bin/emu-stop
+TimeoutStartSec=420
+TimeoutStopSec=90
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=default.target

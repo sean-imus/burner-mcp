@@ -1,0 +1,15 @@
+# Template: install.sh fills in @REPO@ and @NODE@ and installs this to ~/.config/systemd/user/.
+[Unit]
+Description=burner-mcp remote MCP server
+Wants=burner-emulator.service
+After=burner-emulator.service
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/burner-mcp/env
+ExecStart=@NODE@ @REPO@/server/index.mjs
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

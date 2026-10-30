@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Restore the running phone to a saved snapshot (default "clean") in a few seconds.
+# Re-save the clean state any time with: adb emu avd snapshot save clean
+set -euo pipefail
+source "$(dirname "$0")/config.sh"
+
+SNAPSHOT="${1:-clean}"
+
+# Loading a snapshot rewinds the phone-side half of scrcpy, which closes the window; reopen it afterwards.
+viewer_was_open=0
+pgrep -x scrcpy >/dev/null && viewer_was_open=1
+
+# adb emu reports failures as "KO: ..." but still exits 0, so check the text.
+out="$(adb -s "$BURNER_SERIAL" emu avd snapshot load "$SNAPSHOT" 2>&1)"
+if ! grep -q '^OK' <<<"$out"; then
+  echo "Could not load snapshot '$SNAPSHOT':" >&2
+  echo "$out" >&2
+  echo "Available snapshots:" >&2
+  adb -s "$BURNER_SERIAL" emu avd snapshot list >&2
+  exit 1
+fi
+
+deadline=$((SECONDS + 60))
+until [ "$(adb -s "$BURNER_SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
+  if (( SECONDS > deadline )); then
+    echo "Snapshot loaded, but the device didn't come back within 60s." >&2
+    exit 1
+  fi
+  sleep 1
+done
+echo "Restored '$SNAPSHOT' in ${SECONDS}s."
+
+if (( viewer_was_open )); then
+  sleep 1  # let the old scrcpy notice the disconnect and exit
+  setsid -f "$(dirname "$0")/emu-view" >/dev/null 2>&1
+  echo "Reopened the scrcpy window."
+fi

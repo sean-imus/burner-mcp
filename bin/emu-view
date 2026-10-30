@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Open a scrcpy window mirroring the emulator. Extra args go straight to scrcpy.
+set -euo pipefail
+source "$(dirname "$0")/config.sh"
+
+exec scrcpy -s "$BURNER_SERIAL" --window-title "$BURNER_AVD" "$@"

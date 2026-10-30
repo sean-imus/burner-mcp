@@ -1,0 +1,24 @@
+{
+  "name": "burner-mcp",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Slim remote MCP server for one Android emulator, wrapping mobile-mcp",
+  "type": "module",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs",
+    "test": "node test.mjs",
+    "robustness": "node robustness.mjs",
+    "screen": "node call.mjs '[{\"name\":\"screen\"}]'"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@mobilenext/mobile-mcp": "^1.0.14",
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@modelcontextprotocol/node": "^2.1.2",
+    "@modelcontextprotocol/server": "^2.4.0",
+    "zod": "^4.6.7"
+  }
+}
