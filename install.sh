@@ -143,6 +143,10 @@ step "Clean snapshot for resets"
 if adb -s "$SERIAL" emu avd snapshot list | grep -qw clean; then
   echo "Already saved."
 else
+  # Every reset returns here, so let a new phone finish its first-boot setup first. Saved right after boot, some
+  # Google parts never finish starting (Settings search opens blank).
+  echo "Letting the new phone finish its first-boot setup (3 min)..."
+  sleep "${SETTLE_SECONDS:-180}"
   adb -s "$SERIAL" shell input keyevent KEYCODE_HOME
   sleep 2
   adb -s "$SERIAL" emu avd snapshot save clean >/dev/null
